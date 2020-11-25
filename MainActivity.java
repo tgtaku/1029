@@ -32,11 +32,20 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
+    //管理企業ID検索結果
+    public static String connection = "";
+    //ログイン結果
     public static String loginResult = "";
+    //管理会社ID、ユーザーID、パスワードの入力欄
     EditText UserIdEt, PasswordEt, HostEt;
-    public static String host;
-    public static String userId;
-    public static String companyId;
+    //ログイン処理用の変数
+    //管理会社ID、ユーザーID、パスワード
+    protected static String host;  //画面遷移パラメータ
+    public static String userId;    //画面遷移パラメータ
+    String password;
+
+    //画面遷移パラメータ
+    public static String companyId; //会社ID
     public static String usersId;
     public static String flag;
     public static String usersName;
@@ -46,43 +55,86 @@ public class MainActivity extends AppCompatActivity {
     String regex_projects_id = "\"projects_id\":.+?\",";
     String regex_companies_id = "\"companies_id\":.+?\",";
     String regex_flag = "\"flag\":.+?\",";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //画面遷移時の処理
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //入力欄の定義
         HostEt = (EditText)findViewById(R.id.editHost);
         UserIdEt = (EditText)findViewById(R.id.editUserName);
         PasswordEt = (EditText)findViewById(R.id.editPass);
+        flag = "1";
     }
+
+    //ログインボタン押下時の処理
     public void loginClick(View view){
+        //入力欄の情報を入手
         userId = UserIdEt.getText().toString();
-        String password = PasswordEt.getText().toString();
+        password = PasswordEt.getText().toString();
         host = HostEt.getText().toString();
+
         String type = "login";
         BackgroundWorker backgroundWorker = new BackgroundWorker(this);
         backgroundWorker.execute(host, userId, password);
-
     }
 
-
+    //非同期のログイン処理
     public class BackgroundWorker extends AsyncTask<String, Void, String> {
         Context context;
         AlertDialog alertDialog;
-
         BackgroundWorker(Context ctx) {
             context = ctx;
         }
 
         @Override
         protected String doInBackground(String... params) {
-            if (params[0] == "sample1") {
-                loginResult = "";
-                //String localHostUrl = "http://10.20.170.52/sample/EX_upload.php";
-                String localHostUrl = "http://10.20.170.52/sample/delete_picture.php";
-                HttpURLConnection httpURLConnection = null;
+            //param[0]：管理会社ID、[1]：ユーザーID、[2]：パスワード
+
+            //管理会社ID確認
+            String localHostUrl = "http://10.20.170.52/preLogin.php";
+            HttpURLConnection httpURLConnection = null;
+            try {
+                URL url = new URL(localHostUrl);
+                httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setDoInput(true);
+                httpURLConnection.setDoOutput(true);
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+                String post_data = URLEncoder.encode("owner", "UTF-8") + "=" + URLEncoder.encode(host, "UTF-8");
+                bufferedWriter.write(post_data);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                outputStream.close();
+                InputStream inputStream = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "iso-8859-1"));
+                String line = "";
+                while ((line = bufferedReader.readLine()) != null) {
+                    connection += line;
+                }
+                bufferedReader.close();
+                inputStream.close();
+                httpURLConnection.disconnect();
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println(connection);
+
+            if (!connection.equals("")) {
+
+                /*
+                //企業IDを取得
+                localHostUrl = "http://10.20.170.52/sample/get_company_id.php";
+                httpURLConnection = null;
+                StringBuffer _conResult = new StringBuffer();
+
                 try {
-                    String pictures_information = params[1];
-                    //String pass_word = params[2];
+                    System.out.println("usersID.php");
                     URL url = new URL(localHostUrl);
                     httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("POST");
@@ -90,35 +142,106 @@ public class MainActivity extends AppCompatActivity {
                     httpURLConnection.setDoOutput(true);
                     OutputStream outputStream = httpURLConnection.getOutputStream();
                     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-                    String post_data = URLEncoder.encode("pictures_name", "UTF-8") + "=" + URLEncoder.encode(pictures_information, "UTF-8");// + "&" + URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode(pass_word, "UTF-8");
+                    //POSTデータの編集
+                    String post_data = URLEncoder.encode("name", "UTF-8")
+                            + "=" + URLEncoder.encode(userId, "UTF-8");
+                    System.out.println(post_data);
                     bufferedWriter.write(post_data);
                     bufferedWriter.flush();
                     bufferedWriter.close();
                     outputStream.close();
                     InputStream inputStream = httpURLConnection.getInputStream();
-                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "iso-8859-1"));
-                    String line = "";
-                    while ((line = bufferedReader.readLine()) != null) {
-                        loginResult += line;
+                    String encoding = httpURLConnection.getContentEncoding();
+                    if (null == encoding) {
+                        encoding = "UTF-8";
+                    }
+                    InputStreamReader inReader = new InputStreamReader(inputStream, encoding);
+                    BufferedReader bufferedReader = new BufferedReader(inReader);
+                    String line = bufferedReader.readLine();
+                    while (line != null) {
+                        _conResult.append(line);
+                        line = bufferedReader.readLine();
                     }
                     bufferedReader.close();
                     inputStream.close();
                     httpURLConnection.disconnect();
-
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println(loginResult);
-                String test = "test";
-                return test;
+                //JSONからデータの取得
+                System.out.println(_conResult.toString());
+                Pattern p_usersId = Pattern.compile(regex_users_id);
+                checkUsersId(p_usersId, _conResult.toString());
+                System.out.println(usersId);
+                Pattern p_companyId = Pattern.compile(regex_companies_id);
+                checkCompanyId(p_companyId, _conResult.toString());
+                System.out.println(companyId);
+                Pattern p_flag = Pattern.compile(regex_flag);
+                checkFlag(p_flag, _conResult.toString());
+                System.out.println(flag);
+                Pattern p_users_name = Pattern.compile(regex_users_name);
+                checkUsersName(p_users_name, _conResult.toString());
+                System.out.println(flag);
 
-            } else {
-                //発注元ID確認
+
+                //companyIdから参加プロジェクトを取得
+                localHostUrl = "http://10.20.170.52/sample/get_assign_projects_id.php";
+                httpURLConnection = null;
+                _conResult = new StringBuffer();
+
+                try {
+                    System.out.println("projectsID.php");
+                    URL url = new URL(localHostUrl);
+                    httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("POST");
+                    httpURLConnection.setDoInput(true);
+                    httpURLConnection.setDoOutput(true);
+                    OutputStream outputStream = httpURLConnection.getOutputStream();
+                    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+                    //POSTデータの編集
+                    String post_data = URLEncoder.encode("companies_id", "UTF-8")
+                            + "=" + URLEncoder.encode(companyId, "UTF-8")
+                        /*+ "&" + URLEncoder.encode("users_id", "UTF-8")
+                        + "=" + URLEncoder.encode(String.valueOf(usersId), "UTF-8")*/;
+
+                    /*System.out.println(post_data);
+                    bufferedWriter.write(post_data);
+                    bufferedWriter.flush();
+                    bufferedWriter.close();
+                    outputStream.close();
+                    InputStream inputStream = httpURLConnection.getInputStream();
+                    String encoding = httpURLConnection.getContentEncoding();
+                    if (null == encoding) {
+                        encoding = "UTF-8";
+                    }
+                    InputStreamReader inReader = new InputStreamReader(inputStream, encoding);
+                    BufferedReader bufferedReader = new BufferedReader(inReader);
+                    String line = bufferedReader.readLine();
+                    while (line != null) {
+                        _conResult.append(line);
+                        line = bufferedReader.readLine();
+                    }
+                    bufferedReader.close();
+                    inputStream.close();
+                    httpURLConnection.disconnect();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //JSONからデータの取得
+                System.out.println(_conResult.toString());
+                Pattern p_projectsId = Pattern.compile(regex_projects_id);
+                checkProjectsId(p_projectsId, _conResult.toString());
+                System.out.println(projectsNum);
+                */
+
+                //ログイン処理
                 loginResult = "";
-                String localHostUrl = "http://10.20.170.52/preLogin.php";
-                HttpURLConnection httpURLConnection = null;
+                localHostUrl = "http://10.20.170.52/login.php";
+                httpURLConnection = null;
                 try {
                     String user_name = params[1];
                     String pass_word = params[2];
@@ -129,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
                     httpURLConnection.setDoOutput(true);
                     OutputStream outputStream = httpURLConnection.getOutputStream();
                     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-                    String post_data = URLEncoder.encode("owner", "UTF-8") + "=" + URLEncoder.encode(host, "UTF-8");
+                    String post_data = URLEncoder.encode("user_name", "UTF-8") + "=" + URLEncoder.encode(user_name, "UTF-8") + "&" + URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode(pass_word, "UTF-8");
                     bufferedWriter.write(post_data);
                     bufferedWriter.flush();
                     bufferedWriter.close();
@@ -150,157 +273,10 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 System.out.println(loginResult);
-
-                if (!loginResult.equals("")) {
-                    //企業IDを取得
-                    localHostUrl = "http://10.20.170.52/sample/get_company_id.php";
-                    httpURLConnection = null;
-                    StringBuffer _conResult = new StringBuffer();
-
-                    try {
-                        System.out.println("usersID.php");
-                        URL url = new URL(localHostUrl);
-                        httpURLConnection = (HttpURLConnection) url.openConnection();
-                        httpURLConnection.setRequestMethod("POST");
-                        httpURLConnection.setDoInput(true);
-                        httpURLConnection.setDoOutput(true);
-                        OutputStream outputStream = httpURLConnection.getOutputStream();
-                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-                        //POSTデータの編集
-                        String post_data = URLEncoder.encode("name", "UTF-8")
-                                + "=" + URLEncoder.encode(userId, "UTF-8");
-                        System.out.println(post_data);
-                        bufferedWriter.write(post_data);
-                        bufferedWriter.flush();
-                        bufferedWriter.close();
-                        outputStream.close();
-                        InputStream inputStream = httpURLConnection.getInputStream();
-                        String encoding = httpURLConnection.getContentEncoding();
-                        if (null == encoding) {
-                            encoding = "UTF-8";
-                        }
-                        InputStreamReader inReader = new InputStreamReader(inputStream, encoding);
-                        BufferedReader bufferedReader = new BufferedReader(inReader);
-                        String line = bufferedReader.readLine();
-                        while (line != null) {
-                            _conResult.append(line);
-                            line = bufferedReader.readLine();
-                        }
-                        bufferedReader.close();
-                        inputStream.close();
-                        httpURLConnection.disconnect();
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //JSONからデータの取得
-                    System.out.println(_conResult.toString());
-                    Pattern p_usersId = Pattern.compile(regex_users_id);
-                    checkUsersId(p_usersId, _conResult.toString());
-                    System.out.println(usersId);
-                    Pattern p_companyId = Pattern.compile(regex_companies_id);
-                    checkCompanyId(p_companyId, _conResult.toString());
-                    System.out.println(companyId);
-                    Pattern p_flag = Pattern.compile(regex_flag);
-                    checkFlag(p_flag, _conResult.toString());
-                    System.out.println(flag);
-                    Pattern p_users_name = Pattern.compile(regex_users_name);
-                    checkUsersName(p_users_name, _conResult.toString());
-                    System.out.println(flag);
-
-
-                    //companyIdから参加プロジェクトを取得
-                    localHostUrl = "http://10.20.170.52/sample/get_assign_projects_id.php";
-                    httpURLConnection = null;
-                    _conResult = new StringBuffer();
-
-                    try {
-                        System.out.println("projectsID.php");
-                        URL url = new URL(localHostUrl);
-                        httpURLConnection = (HttpURLConnection) url.openConnection();
-                        httpURLConnection.setRequestMethod("POST");
-                        httpURLConnection.setDoInput(true);
-                        httpURLConnection.setDoOutput(true);
-                        OutputStream outputStream = httpURLConnection.getOutputStream();
-                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-                        //POSTデータの編集
-                        String post_data = URLEncoder.encode("companies_id", "UTF-8")
-                                + "=" + URLEncoder.encode(companyId, "UTF-8")
-                            /*+ "&" + URLEncoder.encode("users_id", "UTF-8")
-                            + "=" + URLEncoder.encode(String.valueOf(usersId), "UTF-8")*/;
-
-                        System.out.println(post_data);
-                        bufferedWriter.write(post_data);
-                        bufferedWriter.flush();
-                        bufferedWriter.close();
-                        outputStream.close();
-                        InputStream inputStream = httpURLConnection.getInputStream();
-                        String encoding = httpURLConnection.getContentEncoding();
-                        if (null == encoding) {
-                            encoding = "UTF-8";
-                        }
-                        InputStreamReader inReader = new InputStreamReader(inputStream, encoding);
-                        BufferedReader bufferedReader = new BufferedReader(inReader);
-                        String line = bufferedReader.readLine();
-                        while (line != null) {
-                            _conResult.append(line);
-                            line = bufferedReader.readLine();
-                        }
-                        bufferedReader.close();
-                        inputStream.close();
-                        httpURLConnection.disconnect();
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //JSONからデータの取得
-                    System.out.println(_conResult.toString());
-                    Pattern p_projectsId = Pattern.compile(regex_projects_id);
-                    checkProjectsId(p_projectsId, _conResult.toString());
-                    System.out.println(projectsNum);
-
-
-                    //ログイン処理
-                    loginResult = "";
-                    localHostUrl = "http://10.20.170.52/login.php";
-                    httpURLConnection = null;
-                    try {
-                        String user_name = params[1];
-                        String pass_word = params[2];
-                        URL url = new URL(localHostUrl);
-                        httpURLConnection = (HttpURLConnection) url.openConnection();
-                        httpURLConnection.setRequestMethod("POST");
-                        httpURLConnection.setDoInput(true);
-                        httpURLConnection.setDoOutput(true);
-                        OutputStream outputStream = httpURLConnection.getOutputStream();
-                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-                        String post_data = URLEncoder.encode("user_name", "UTF-8") + "=" + URLEncoder.encode(user_name, "UTF-8") + "&" + URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode(pass_word, "UTF-8");
-                        bufferedWriter.write(post_data);
-                        bufferedWriter.flush();
-                        bufferedWriter.close();
-                        outputStream.close();
-                        InputStream inputStream = httpURLConnection.getInputStream();
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "iso-8859-1"));
-                        String line = "";
-                        while ((line = bufferedReader.readLine()) != null) {
-                            loginResult += line;
-                        }
-                        bufferedReader.close();
-                        inputStream.close();
-                        httpURLConnection.disconnect();
-
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println(loginResult);
-                    //return loginResult;
-                }
-
+                //return loginResult;
             }
+
+            //}
             return loginResult;
         }
 
@@ -310,14 +286,9 @@ public class MainActivity extends AppCompatActivity {
             //alertDialog.setMessage("result");
             //alertDialog.show();
             if(result.equals("login success!")) {
-                if(flag.equals("1")){
                     Intent intent = new Intent(MainActivity.this, MyPage.class);
+                    //intent.putExtra("flag", flag);
                     startActivity(intent);
-                }else if(flag.equals("0")){
-                    Intent intent = new Intent(MainActivity.this, MyPage_User.class);
-                    startActivity(intent);
-                }
-
             }else{
 
             }

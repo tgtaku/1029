@@ -18,6 +18,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
@@ -121,10 +123,16 @@ public class MyPage extends AppCompatActivity {
         spinner  = findViewById(R.id.spinner);
         spinnerFile = findViewById(R.id.spinnerFile);
 
-        getPDFInfo gp = new getPDFInfo();
-        gp.execute(urlProjectName);
+        //getPDFInfo gp = new getPDFInfo();
+        //gp.execute(urlProjectName);
 
-
+        //web管理画面へのリンクを作成
+        TextView web_link_text = findViewById(R.id.web_link);
+        if(MainActivity.flag == "1"){
+            web_link_text.setLinksClickable(true);
+            web_link_text.setText(Html.fromHtml("web登録は<a href = \"http://10.20.170.52/web/login.php\">こちら</a>をタッチ"));
+            web_link_text.setMovementMethod(LinkMovementMethod.getInstance());
+        }
 
         // リスナーを登録
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
