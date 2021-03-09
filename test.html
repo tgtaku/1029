@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Excel出力</title>
+        <link rel = "stylesheet" href = "http://192.168.3.4/web/test.css">
+    </head>
+    <body>
+        <script> src = "https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"</script>
+    <h1>帳票テスト</h1>
+    
+    <table id = "table">
+        <tr class = "tr1">
+            
+        </tr>
+        <tbody id = "tbody">
+
+        </tbody>
+    </table>
+    <script>
+        var jsonTest =[
+            {name : 'user1',age : '1',birthday : '2020/01/01',aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa : 'test',
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb : 'test'},
+            {
+                name : 'user2',
+                age : '2',
+                birthday : '2020/02/02',
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa : 'test',
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb : 'test'
+            },
+            {
+                name : 'user3',
+                age : '3',
+                birthday : '2020/03/03',
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa : 'test',
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb : 'test'
+            },
+            {
+                name : 'user4',
+                age : '4',
+                birthday : '2020/04/04',
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa : 'test',
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb : 'test'
+            }
+
+        ];
+        //テーブル作成処理実行
+        buildtable(jsonTest);
+
+        function buildtable(data){
+            console.log(data);
+        
+            var dataLength = data.length;
+            const keys = Object.keys(data[0]);
+            //console.log(keys);
+            var keyLength = keys.length;
+            //const j = JSON.parse(data);
+            //console.log(dataLength);
+            //console.log(keyLength);
+            
+            var table = document.getElementById('table');
+            
+            //テーブルラベルの挿入
+            var index = table.insertRow(-1);
+            for(var i = 0; i < keyLength; i++){
+                var th = document.createElement("th");
+                th.setAttribute("id","th");
+                th.innerHTML = keys[i];
+                index.appendChild(th);
+            }
+
+            //要素の挿入
+            for(var j = 0; j < dataLength; j++){
+                var row = table.insertRow(-1);
+                var data_array = data[j];
+                for(key in data_array){
+                    var td = row.insertCell(-1);
+                    //console.log('key = ' + key);
+                    var value = data_array[key];
+                    //console.log(value);
+                    td.innerHTML = value;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
