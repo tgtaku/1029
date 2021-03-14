@@ -1,20 +1,21 @@
-h1{
-    background-color: aqua;
-}
+
 
 table{
     display: block;
-    table-layout: fixed;
-    width: 70%;
-    height: 10%;
+}
+
+table tbody{
+    height: 300px;
     overflow-y: scroll;
     overflow-x: scroll;
+    position: absolute;
 }
-table tbody{
-    width:100%;
-    display:table;
+
+tbody tr:nth-child(2n){
+    background-color:lightgray;
 }
 
 #th{
-    background-color: bisque;
+    background-color:skyblue;
 }
+
